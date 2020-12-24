@@ -323,18 +323,34 @@ export function getBestBrawlers(brawlers: BrawlerMetaStatistics[]): BrawlerMetaS
 
 export interface MetaGridEntry {
   id: string
-  title: string
-  brawlers: string[] // ID
-  link?: string
-  icon?: string
-  sampleSize: number
-  stats: {
-    [name: string]: string|number
+  dimensions: {
+    player?: {
+      tag: string
+      name?: string
+    }
+    brawler?: {
+      id: string
+      name: string
+    }
+    ally?: {
+      id: string
+      name: string
+    }
+    starpower?: {
+      id: string
+      name: string
+    }
+    gadget?: {
+      id: string
+      name: string
+    }
+    brawlers?: [{
+      id: string
+      name: string
+    }]
   }
-}
-
-export interface MetaGridEntrySorted extends MetaGridEntry {
-  sortProp: string
+  measurements: Record<string, number>
+  measurementsFormatted: Record<string, string>
 }
 
 export interface MetaGridEntryTiered extends MetaGridEntry {
@@ -484,11 +500,40 @@ export const measurementMap = {
   pickRate: 'picks',
   starRate: 'battle_starplayer',
   starRateDiff: 'battle_starplayer',
+  rank: 'battle_rank',
   rank1Rate: 'battle_rank1',
   rank1RateDiff: 'battle_rank1',
   duration: 'battle_duration',
   picks: 'picks',
   users: 'users',
+  player: 'player_name',
+  brawler: 'brawler_name',
+}
+
+export const dimensionMap: Record<keyof MetaGridEntry['dimensions'], string> = {
+  player: 'player_id',
+  brawler: 'brawler_name',
+  brawlers: 'brawler_names',
+  ally: 'ally_brawler_name',
+  gadget: 'brawler_gadget_name',
+  starpower: 'brawler_starpower_name',
+}
+
+export const dimensionLabel = {
+  'player.name': 'Players',
+  'brawler.name': 'Brawlers',
+  'brawlers.name': 'Teams',
+  'ally.name': 'Allies',
+  'gadget.name': 'Gadgets',
+  'starpower.name': 'Star Powers',
+}
+
+export const sliceMap = {
+  season: 'trophy_season_end',
+  mode: 'battle_event_mode',
+  map: 'battle_event_map',
+  brawler: 'brawler_name',
+  ally: 'ally_brawler_name',
 }
 
 export const measurementOfTotal = {
@@ -501,6 +546,7 @@ export const measurementOfTotal = {
   pickRate: true,
   starRate: false,
   starRateDiff: false,
+  rank: false,
   rank1Rate: false,
   rank1RateDiff: false,
   duration: false,
@@ -508,80 +554,15 @@ export const measurementOfTotal = {
   users: false,
 }
 
-export function compare(entry1: MetaGridEntry, entry2: MetaGridEntry, stat: keyof typeof metaStatMaps.signs): number {
-  const sign = metaStatMaps.signs[stat]
-  const e1stat = Number.parseFloat((entry1.stats[stat] || 0).toString())
-  const e2stat = Number.parseFloat((entry2.stats[stat] || 0).toString())
+export function compare(entry1: MetaGridEntry, entry2: MetaGridEntry, m: keyof typeof metaStatMaps.signs): number {
+  const sign = metaStatMaps.signs[m]
+  const e1stat = entry1.measurements[m]
+  const e2stat = entry2.measurements[m]
   return sign * (e1stat - e2stat)
 }
 
-export function compare1(stat: keyof typeof metaStatMaps.signs) {
-  return (entry1: MetaGridEntry, entry2: MetaGridEntry) => compare(entry1, entry2, stat)
-}
-
-interface DiffRow {
-  brawler_id: string
-  brawler_name: string
-  picks: number
-  battle_victory: number
-  battle_starplayer: number
-  battle_rank1: number
-  brawler_starpower_name?: string
-  brawler_starpower_id?: number
-  brawler_gadget_name?: string
-  brawler_gadget_id?: number
-}
-
-// calculate diff stats between brawlers with & without starpower/gadget
-export function calculateDiffs(rows: DiffRow[], accessoryType: string, accessoryNameKey: 'brawler_starpower_name'|'brawler_gadget_name', accessoryIdKey: 'brawler_starpower_id'|'brawler_gadget_id', includeZScore: boolean) {
-  return rows
-    // map over gadgets/star powers
-    .filter(s => s[accessoryNameKey] !== '')
-    // in case of duplicate IDs, use the first (most picks)
-    .filter((e1, index, all) => all.findIndex(e2 => e1[accessoryIdKey] == e2[accessoryIdKey]) == index)
-    .map((accessory) => {
-      const brawlerWithout = rows.find(b => b[accessoryNameKey] == '' && b.brawler_id == accessory.brawler_id)
-
-      if (brawlerWithout == undefined) {
-        return undefined
-      }
-
-      // calculate z-score, testing with star power wins against without star power wins
-      const zX = accessory.battle_victory * accessory.picks
-      const zN = accessory.picks
-      const zP = brawlerWithout.battle_victory
-      const zCondition = zN >= 50 && zN * zP > 5 && zN * (1 - zP) > 5
-      if (includeZScore && !zCondition) {
-        return undefined
-      }
-
-      const z = (zX - zN * zP) / Math.sqrt(zN * zP * (1 - zP))
-
-      const sampleSize = Math.min(accessory.picks, brawlerWithout.picks)
-      const stats = {
-        ...(includeZScore ? { winsZScore: z } : {}),
-        ...(accessory.battle_victory != undefined ? {
-          winRateDiff: accessory.battle_victory - brawlerWithout.battle_victory,
-        } : {}),
-        ...(accessory.battle_starplayer != undefined ? {
-          starRateDiff: accessory.battle_starplayer - brawlerWithout.battle_starplayer,
-        } : {}),
-        ...(accessory.battle_rank1 != undefined ? {
-          rank1RateDiff: accessory.battle_rank1 - brawlerWithout.battle_rank1,
-        } : {}),
-      }
-
-      return <MetaGridEntry>{
-        id: `${accessory.brawler_id}-${accessory[accessoryNameKey]}`,
-        title: capitalizeWords((accessory[accessoryNameKey] || '').toLowerCase()),
-        brawlers: [accessory.brawler_name],
-        sampleSize,
-        stats,
-        icon: `/${accessoryType}/${accessory[accessoryIdKey]}`,
-        link: `/tier-list/brawler/${brawlerId({ name: accessory.brawler_name })}`,
-      }
-    })
-    .filter(e => e != undefined) as MetaGridEntry[]
+export function compare1(m: keyof typeof metaStatMaps.signs) {
+  return (entry1: MetaGridEntry, entry2: MetaGridEntry) => compare(entry1, entry2, m)
 }
 
 export function encodeQuery(data: { [key: string]: number|string }) {
@@ -602,16 +583,16 @@ export function isSpecialEvent(mode: string) {
 /*
  * min-max scale stat into the 5 tiers and put nulls into '?' tier
  */
-export function scaleEntriesIntoTiers(entries: MetaGridEntry[], stat: keyof typeof entries[0]['stats']): MetaGridEntryTiered[] {
-  const getStat = (e: MetaGridEntry) => typeof e.stats[stat] != 'string' ? e.stats[stat] as number|undefined :  Number.parseFloat(e.stats[stat] as string)
+export function scaleEntriesIntoTiers(entries: MetaGridEntry[], measurement: keyof typeof entries[0]['measurements']): MetaGridEntryTiered[] {
+  const getStat = (e: MetaGridEntry) => e.measurements[measurement]
   const sortedEntries = entries
     .slice()
-    .sort(compare1(stat as any))
+    .sort(compare1(measurement as any))
 
   const stats = sortedEntries
     .map(getStat)
     .reverse()
-  const sign = metaStatMaps.signs[stat as keyof typeof metaStatMaps.signs]
+  const sign = metaStatMaps.signs[measurement as keyof typeof metaStatMaps.signs]
   const min = stats[sign == -1 ? 1 : stats.length - 2]! // skip highest (outlier)
   const max = stats[sign == -1 ? stats.length - 2 : 1]! // skip lowest
   const clamp = (v: number) => Math.max(min, Math.min(max, v))
@@ -631,3 +612,5 @@ export function scaleEntriesIntoTiers(entries: MetaGridEntry[], stat: keyof type
     }
   })
 }
+
+export const getDotProp = (o: any, k: string) => k.split('.').reduce((a, b) => a[b], o)

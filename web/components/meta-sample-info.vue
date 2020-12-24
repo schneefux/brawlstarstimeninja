@@ -196,7 +196,7 @@ export default Vue.extend({
       return (this.moe * 100).toFixed(2) + '%'
     },
     giniScore(): number {
-      const getStat = (r: MetaGridEntry) => r.sampleSize
+      const getStat = (r: MetaGridEntry) => r.measurements.picks
 
       // calculate Gini coefficient
       let absoluteDifference = 0

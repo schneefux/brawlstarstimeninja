@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { metaStatMaps, MetaGridEntry, compare1 } from '../lib/util'
+import { metaStatMaps, MetaGridEntry, getDotProp } from '../lib/util'
 
 export default Vue.extend({
   inheritAttrs: false,
@@ -22,7 +22,11 @@ export default Vue.extend({
       type: String,
       required: true
     },
-    stat: {
+    dimension: {
+      type: String,
+      required: true
+    },
+    measurement: {
       type: String,
       required: true
     },
@@ -33,7 +37,7 @@ export default Vue.extend({
   },
   computed: {
     chart(): any {
-      if (this.entries.length == 0 || !(this.stat in this.entries[0].stats)) {
+      if (this.entries.length == 0) {
         return undefined
       }
 
@@ -44,20 +48,9 @@ export default Vue.extend({
 
       return {
         traces: [{
-          x: this.entries.map(e => e.title),
-          y: this.entries.map(e => {
-            // fix `calculateDiffs` output by unformatting it
-            // TODO: find a better solution
-            const s = e.stats[this.stat]
-            if (typeof s == 'number') {
-              return s
-            }
-            if (s.endsWith('%')) {
-              return Number.parseFloat(s.slice(0, -1)) / 100
-            }
-            return 0
-          }),
-          text: this.entries.map(e => e.title),
+          x: this.entries.map(e => getDotProp(e.dimensions, this.dimension)),
+          y: this.entries.map(e => getDotProp(e.measurements, this.measurement)),
+          text: this.entries.map(e => getDotProp(e.dimensions, this.dimension)),
           marker: {
             color: '#facc15' // yellow-400
           },
@@ -77,11 +70,11 @@ export default Vue.extend({
           },
           yaxis: {
             title: {
-              text: metaStatMaps.labels[this.stat],
+              text: this.measurementLabel,
               standoff: 10,
             },
             fixedrange: true,
-            tickformat: metaStatMaps.d3formatters[this.stat],
+            tickformat: metaStatMaps.d3formatters[this.measurement.replace('measurements.', '')], // FIXME
             tickcolor: '#ffffff',
             automargin: true,
           },

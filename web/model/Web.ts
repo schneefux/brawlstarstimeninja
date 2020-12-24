@@ -1,4 +1,3 @@
-import { IContentDocument } from "@nuxt/content/types/content";
 import { MetaGridEntry } from "~/lib/util";
 
 export interface PlayerModeStats {

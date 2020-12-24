@@ -1,5 +1,5 @@
 import { differenceInMinutes, parseISO } from "date-fns"
-import { brawlerId, capitalizeWords, formatMode, measurementMap, measurementOfTotal, MetaGridEntry } from "~/lib/util"
+import { brawlerId, capitalizeWords, dimensionMap, sliceMap, formatMode, measurementMap, measurementOfTotal, MetaGridEntry, metaStatMaps } from "~/lib/util"
 import { CurrentAndUpcomingEvents } from "~/model/Api"
 import { Route, Location } from "vue-router"
 
@@ -59,11 +59,11 @@ interface Clicker {
     // H(ally_brawler,brawler)
     pairData: Map<string, Map<string, PicksWins>>,
   }>
-  routeToSlices(route: Route, defaults?: Slices): Slices
+  routeToSlices(route: Route, defaults?: Slices): Record<string, string[]>
   slicesToLocation(slices: Slices, defaults?: Slices): Location
-  // backwards compat
-  mapToMetaGridEntry<R extends { player_name?: string, brawler_name?: string, brawler_names?: string[], ally_brawler_name?: string, picks: number }>(
-    measurements: (keyof typeof measurementMap)[], rows: R[], totals: R): MetaGridEntry[]
+  constructQuery(dimensions: string[], measurements: string[], slices: Record<string, string[]>): { dimensions: string[], measurements: string[], slices: Record<string, string[]> }
+  mapToMetaGridEntry(dimensions: string[], measurements: string[], rows: any[], totals: any, diffDimension?: string): MetaGridEntry[]
+  compareEntries(baseEntries: MetaGridEntry[], comparingEntries: MetaGridEntry[]): MetaGridEntry[]
 }
 
 declare module 'vue/types/vue' {
@@ -368,23 +368,109 @@ export default (context, inject) => {
 
       return { query }
     },
-    mapToMetaGridEntry(measurements, rows, totals) {
-      return rows.map(row => ({
-        id: (row.brawler_names?.join('+') || row.brawler_name || '') + (row.ally_brawler_name != undefined ? '+' + row.ally_brawler_name : '' ),
-        brawlers: row.brawler_names || (row.brawler_name != undefined ? [row.brawler_name] : []),
-        title: row.player_name || capitalizeWords((row.brawler_names?.join(', ') || row.brawler_name || '').toLowerCase()),
-        stats: measurements.reduce((stats, m) => ({
-          ...stats,
-          [m]: row[measurementMap[m]] / (measurementOfTotal[m] ? totals[measurementMap[m]] : 1),
-        }), {} as Record<string, number>),
-        sampleSize: row.picks,
-        ...(row.brawler_name != undefined ? {
-          link: `/tier-list/brawler/${brawlerId({ name: row.brawler_name })}`,
-        } : {}),
-        ...(row.ally_brawler_name != undefined ? {
-          icon: `/brawlers/${brawlerId({ name: row.ally_brawler_name })}/avatar`
-        } : {}),
-      }))
+    constructQuery(dimensions, measurements, slices) {
+      const queryDimensions = dimensions.map(d => dimensionMap[d])
+      const queryMeasurements = measurements.map(m => measurementMap[m])
+      const querySlices = Object.fromEntries(Object.entries(slices)
+        .filter(([key, value]) => {
+          if (!Array.isArray(value)) {
+            throw new Error('Illegal slice specification! ' + { [key]: value })
+          }
+          return value.length > 0 && value[0] != undefined
+        })
+        .map(([key, value]) => [sliceMap[key], value]))
+
+      return {
+        dimensions: queryDimensions,
+        measurements: queryMeasurements,
+        slices: querySlices,
+      }
     },
+    mapToMetaGridEntry(dimensions, measurements, rows, totals) {
+      return rows.map(row => {
+        const entry: MetaGridEntry = {
+          id: '',
+          dimensions: {},
+          measurements: {},
+          measurementsFormatted: {},
+        }
+
+        if (dimensions.includes('player')) {
+          entry.dimensions.player = {
+            tag: row.player_tag,
+          }
+          if (measurements.includes('player')) {
+            entry.dimensions.player.name = row.player_name
+          }
+        }
+        if (dimensions.includes('brawler') || measurements.includes('brawler')) {
+          entry.dimensions.brawler = {
+            id: brawlerId({ name: row.brawler_name }),
+            name: capitalizeWords(row.brawler_name.toLowerCase()),
+          }
+        }
+        if(dimensions.includes('ally') || measurements.includes('ally')) {
+          entry.dimensions.ally = {
+            id: brawlerId({ name: row.ally_brawler_name }),
+            name: capitalizeWords(row.ally_brawler_name.toLowerCase()),
+          }
+        }
+        if (dimensions.includes('brawlers') || measurements.includes('brawlers')) {
+          entry.dimensions.brawlers = row.brawler_names.map(b => ({
+            id: brawlerId({ name: b }),
+            name: capitalizeWords(b.toLowerCase()),
+          }))
+        }
+
+        entry.id = JSON.stringify(entry.dimensions) // TODO improve performance
+
+        for (const m of measurements) {
+          if (typeof row[measurementMap[m]] != 'string') {
+            // else: already added to dimensions
+            entry.measurements[m] = row[measurementMap[m]] / (measurementOfTotal[m] ? totals[measurementMap[m]] : 1)
+            entry.measurementsFormatted[m] = metaStatMaps.formatters[m](entry.measurements[m])
+          }
+        }
+
+        return entry
+      })
+    },
+    compareEntries(baseEntries: MetaGridEntry[], comparingEntries: MetaGridEntry[]) {
+      return comparingEntries
+        .map(comparingEntry => {
+          // TODO compare all dimensions here
+          const baseEntry = baseEntries.find((b: any) => b.brawler.id == (<any>comparingEntry).brawler.id)
+          if (baseEntry == undefined) {
+            return undefined
+          }
+          if (!('winRate' in baseEntry.measurements) || !('picks' in baseEntry.measurements)) {
+            return undefined
+          }
+
+          // calculate z-score, testing with star power wins against without star power wins
+          const zN = comparingEntry.measurements.picks
+          const zX = comparingEntry.measurements.winRate * zN
+          const zP = baseEntry.measurements.winRate
+          const zCondition = zN >= 50 && zN * zP > 5 && zN * (1 - zP) > 5
+          if (!zCondition) {
+            return undefined
+          }
+
+          const measurements: Record<string, number> = {}
+          const measurementsFormatted: Record<string, string> = {}
+          measurements.winsZScore = (zX - zN * zP) / Math.sqrt(zN * zP * (1 - zP))
+          for (const m in baseEntry.measurements) {
+            measurements[m] = baseEntry.measurements[m] - comparingEntry.measurements[m]
+            measurementsFormatted[m] = metaStatMaps.formatters[m](measurements[m])
+          }
+
+          return {
+            ...comparingEntry,
+            measurements,
+            measurementsFormatted,
+          }
+        })
+      .filter(e => e != undefined) as MetaGridEntry[]
+    }
   })
 }

@@ -62,7 +62,7 @@
               :name="c.key"
               :row="r"
             >
-              {{ r[c.key] }}
+              {{ c.key.split('.').reduce((a, b) => a[b], r) }}
             </slot>
           </td>
         </tr>

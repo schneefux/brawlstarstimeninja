@@ -11,20 +11,20 @@
       <b-table
         slot="content"
         :columns="columns"
-        :rows="rows"
+        :rows="entries"
         id-key="player"
         ranked
       >
-        <template v-slot:player="{ row }">
-          <router-link :to="`/player/${row.player_tag}`">
-            {{ row.player }}
+        <template v-slot:[`dimensions.player`]="{ row }">
+          <router-link :to="`/player/${row.dimensions.player.tag}`">
+            {{ row.dimensions.player.name }}
           </router-link>
         </template>
-        <template v-slot:brawler="{ row }">
-          <router-link :to="`/tier-list/brawler/${row.brawlerId}`">
+        <template v-slot:[`dimensions.brawler`]="{ row }">
+          <router-link :to="`/tier-list/brawler/${row.dimensions.brawler.id}`">
             <media-img
-              :path="`/brawlers/${row.brawlerId}/avatar`"
-              :alt="row.brawlerName"
+              :path="`/brawlers/${row.dimensions.brawler.id}/avatar`"
+              :alt="row.dimensions.brawler.name"
               clazz="h-6"
             ></media-img>
           </router-link>
@@ -36,19 +36,9 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { brawlerId, capitalizeWords, formatMode, metaStatMaps } from '~/lib/util'
+import { brawlerId, capitalizeWords, formatMode, MetaGridEntry, metaStatMaps } from '~/lib/util'
 import { Column } from './b-table.vue'
 import { PlayerRankTableRow } from './player-rank-table.vue'
-
-interface Row {
-  player_name: string
-  player_tag: string
-  brawler_name: string
-  picks: number
-  wins: number
-  battle_victory: number
-  battle_rank: number
-}
 
 export default Vue.extend({
   inheritAttrs: false,
@@ -62,7 +52,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      data: [] as Row[],
+      entries: [] as MetaGridEntry[],
     }
   },
   watch: {
@@ -72,67 +62,52 @@ export default Vue.extend({
   fetchDelay: 0,
   fetchOnServer: false, // FIXME: causes render error
   async fetch() {
+    const measurements = ['player', 'brawler' , ...(this.isShowdown? ['picks', 'rank'] : ['wins', 'winRate'])]
+    const query = this.$clicker.constructQuery(['player'], measurements, {
+      map: [this.map],
+      mode: [this.mode],
+      season: ['current'],
+    })
     const data = await this.$clicker.query('mode.leaderboard',
       'battle',
-      ['player_id'],
-      ['player_name', 'brawler_name' , ...(this.isShowdown? ['picks', 'battle_rank'] : ['wins', 'battle_victory'])], {
+      query.dimensions,
+      query.measurements, {
         ...this.$clicker.defaultSlices('battle'),
-        trophy_season_end: ['current'],
-        ...(this.map != undefined ? {
-          battle_event_map: [this.map],
-        } : {}),
-        ...(this.mode != undefined ? {
-          battle_event_mode: [this.mode],
-        } : {}),
+        ...query.slices,
       }, {
         cache: 60*60,
         sort: { wins: 'desc' },
         limit: 5,
       })
 
-    this.data = data.data
+    this.entries = this.$clicker.mapToMetaGridEntry(['player'], measurements, data.data, data.totals)
   },
   computed: {
-    rows(): unknown[] {
-      return this.data.map(r => ({
-        player: r.player_name,
-        player_tag: r.player_tag.slice(1),
-        brawler: capitalizeWords(r.brawler_name.toLowerCase()),
-        brawlerId: brawlerId({ name: r.brawler_name }),
-        ...(this.isShowdown ? {
-          picks: metaStatMaps.formatters.picks(r.picks),
-          rank: metaStatMaps.formatters.rank(r.battle_rank),
-        } : {
-          wins: metaStatMaps.formatters.wins(Math.floor(r.wins)),
-          winRate: metaStatMaps.formatters.winRate(r.battle_victory),
-        }),
-      }))
-    },
     columns(): Column[] {
       return this.isShowdown ? [{
         title: 'Player',
-        key: 'player',
+        key: 'dimensions.player',
       }, {
         title: 'Brawler',
-        key: 'brawler',
+        key: 'dimensions.brawler',
       }, {
         title: metaStatMaps.labels.picks,
-        key: 'picks',
+        key: 'measurementsFormatted.picks',
       }, {
         title: metaStatMaps.labels.rank,
-        key: 'rank',
+        key: 'measurementsFormatted.rank',
       }] : [{
         title: 'Player',
-        key: 'player',
+        key: 'dimensions.player',
       }, {
         title: 'Brawler',
-        key: 'brawler',
+        key: 'dimensions.brawler',
       }, {
         title: metaStatMaps.labels.wins,
-        key: 'wins',
+        key: 'measurementsFormatted.wins',
       }, {
         title: metaStatMaps.labels.winRate,
-        key: 'winRate',
+        key: 'measurementsFormatted.winRate',
       }]
     },
     title(): string {

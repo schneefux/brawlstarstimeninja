@@ -16,29 +16,8 @@
         class="font-semibold text-sm md:text-lg h-full"
         ranked
       >
-        <template v-slot:name="{ row }">
-          <router-link
-            :to="row.link"
-            :title="row.title"
-            class="flex items-center"
-          >
-            <div class="mr-2 w-10 sm:w-12 md:w-14 relative">
-              <media-img
-                :path="`/brawlers/${row.brawlerId}/avatar`"
-                :alt="row.brawler"
-                size="160"
-                clazz="h-6 sm:h-8 md:h-10"
-              />
-              <media-img
-                v-if="row.icon"
-                :path="row.icon"
-                :alt="row.title"
-                size="80"
-                clazz="h-3 sm:h-5 md:h-6 absolute top-0 right-0 bg-gray-900 bg-opacity-75 rounded-full p-px"
-              />
-            </div>
-            <span class="w-16 md:w-24">{{ row.title }}</span>
-          </router-link>
+        <template v-slot:[`dimensions.brawler`]="{ row }">
+          <meta-brawler-renderer :row="row"></meta-brawler-renderer>
         </template>
       </b-table>
     </div>
@@ -76,6 +55,7 @@ export default Vue.extend({
   },
   data() {
     return {
+      slices: {} as Record<string, string[]>,
       entries: [] as MetaGridEntry[],
     }
   },
@@ -87,29 +67,27 @@ export default Vue.extend({
   fetchDelay: 0,
   fetchOnServer: false, // FIXME: causes render error
   async fetch() {
+    const query = this.$clicker.constructQuery(['brawler'], ['winRateAdj', 'starRate', 'useRate'], {
+      mode: [this.mode],
+      map: [this.map],
+    })
+    const slices = {
+      ...this.$clicker.defaultSlices('map'),
+      ...query.slices,
+    }
+    this.slices = this.$clicker.routeToSlices(this.$route, slices)
+
     const data = await this.$clicker.query('meta.map', 'map',
-      ['brawler_name'],
-      ['battle_victory_adj', 'battle_starplayer', 'picks_weighted', 'picks', 'timestamp'],
+      query.dimensions,
+      query.measurements,
       this.slices, {
         sort: { picks: 'desc' },
         cache: 60*30,
       })
 
-    this.entries = this.$clicker.mapToMetaGridEntry(['winRateAdj', 'useRate', 'starRate'], data.data, data.totals)
+    this.entries = this.$clicker.mapToMetaGridEntry(['brawler'], ['winRateAdj', 'useRate', 'starRate'], data.data, data.totals)
   },
   computed: {
-    slices(): Record<string, string[]|undefined> {
-      const defaultSlices = {
-        ...this.$clicker.defaultSlices('map'),
-        ...(this.mode != undefined ? {
-          battle_event_mode: [this.mode],
-        } : {}),
-        ...(this.map != undefined ? {
-          battle_event_map: [this.map],
-        } : {}),
-      }
-      return this.$clicker.routeToSlices(this.$route, defaultSlices)
-    },
     title(): string {
       if (this.mode == undefined) {
         return 'Best Brawlers in Brawl Stars'
@@ -128,28 +106,17 @@ export default Vue.extend({
         key: 'tier',
       }, {
         title: 'Name',
-        key: 'name',
+        key: 'dimensions.brawler',
       }, {
         title: metaStatMaps.labels.winRateAdj,
-        key: 'winRateAdj',
+        key: 'measurementsFormatted.winRateAdj',
       }, {
         title: metaStatMaps.labels.useRate,
-        key: 'useRate',
+        key: 'measurementsFormatted.useRate',
       }]
     },
     rows(): unknown[] {
       return scaleEntriesIntoTiers(this.entries, 'winRateAdj')
-        .map(e => ({
-          tier: e.tier,
-          name: e.title,
-          winRateAdj: metaStatMaps.formatters.winRateAdj(e.stats.winRateAdj as number),
-          useRate: metaStatMaps.formatters.useRate(e.stats.useRate as number),
-          link: e.link || '',
-          brawlerId: brawlerId({ name: e.brawlers[0] }),
-          brawler: e.brawlers[0],
-          title: e.title,
-          icon: e.icon,
-        }))
     },
     dashboardLink(): RawLocation {
       return {
