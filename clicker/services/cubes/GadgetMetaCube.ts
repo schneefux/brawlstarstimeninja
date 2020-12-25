@@ -31,6 +31,11 @@ export default class GadgetMetaCube extends BrawlerBattleCube {
     brawler_gadget_name LowCardinality(String)
   `
 
+  measures = {
+    ...BrawlerBattleCube.defaultMeasures,
+    'brawler_gadget_name': 'any(brawler_gadget_name)',
+  }
+
   seedQuery = stripIndent`
     SELECT
       trophy_season_end,

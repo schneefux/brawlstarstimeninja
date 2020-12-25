@@ -31,6 +31,11 @@ export default class StarpowerMetaCube extends BrawlerBattleCube {
     brawler_starpower_name LowCardinality(String)
   `
 
+  measures = {
+    ...BrawlerBattleCube.defaultMeasures,
+    'brawler_starpower_name': 'any(brawler_starpower_name)',
+  }
+
   seedQuery = stripIndent`
     SELECT
       trophy_season_end,

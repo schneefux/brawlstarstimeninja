@@ -88,7 +88,7 @@ const winratePosterior = `(1583+${wins})/(1583/${zP}+${picks})`
  * All Brawler Battle cubes share the same measures and have common dimensions.
  */
 export default abstract class BrawlerBattleCube extends MaterializedCube {
-  measures = {
+  static defaultMeasures = {
     'trophy_season_end': 'formatDateTime(MAX(trophy_season_end), \'%FT%TZ\', \'UTC\')',
     'timestamp': 'formatDateTime(argMaxMerge(timestamp_state), \'%FT%TZ\', \'UTC\')',
     'picks': 'SUM(picks)',
@@ -103,7 +103,10 @@ export default abstract class BrawlerBattleCube extends MaterializedCube {
     'battle_starplayer': 'avgMerge(battle_starplayer_state)',
     'battle_level': 'avgMerge(battle_level_state)',
     'battle_trophy_change': 'avgMerge(battle_trophy_change_state)',
+    'brawler_name': 'any(brawler_name)',
   }
+
+  measures = BrawlerBattleCube.defaultMeasures
 
   static defaultDimensions = {
     'trophy_season_end': 'formatDateTime(trophy_season_end, \'%FT%TZ\', \'UTC\')',
