@@ -546,7 +546,7 @@ export default class ClickerService {
       case 'totals':
         return data.totals
       case 'csv':
-        const attrs = [...dimensions, ...measures, ...Object.keys(order)]
+        const attrs = [...new Set([...dimensions, ...measures, ...Object.keys(order)])]
         return attrs.join(',') + '\n'
           + data.data.map(row => attrs.map(a => row[a]).join(',')).join('\n')
       default:

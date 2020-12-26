@@ -80,7 +80,14 @@ app.get('/clicker/cube/:cube/query/:dimensions?', asyncMiddleware(async (req, re
   res.header('Last-Modified', new Date().toUTCString())
   res.header('Expires', new Date(Date.now() + cache * 1000).toUTCString())
   try {
-    res.json(await service.queryCube(cubeName, measures, dimensions, slices, order, limit, name, format))
+    const data = await service.queryCube(cubeName, measures, dimensions, slices, order, limit, name, format)
+    if (typeof data == 'string') {
+      res.header('Content-Type', 'text/csv')
+      res.header('Content-Disposition', `attachment; filename=${name}.csv`)
+      res.send(data)
+    } else {
+      res.json(data)
+    }
   } catch (error) {
     res.status(400)
     console.error('error executing query', error)
