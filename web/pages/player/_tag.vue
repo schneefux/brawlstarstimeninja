@@ -239,8 +239,8 @@ import { MetaInfo } from 'vue-meta'
 import { mapState, mapActions } from 'vuex'
 import { MapMetaMap } from '../../model/MetaEntry'
 import { Post } from '../../model/Web'
-import { Leaderboard, LeaderboardEntry } from '../../model/Api'
-import { BattleTotalRow } from '../../components/player-battles-stats.vue'
+import { Leaderboard, LeaderboardEntry } from '@/model/Api'
+import { BattleTotalRow } from '@/components/player-battles-stats.vue'
 
 export default Vue.extend({
   head(): MetaInfo {
@@ -332,7 +332,7 @@ export default Vue.extend({
       [],
       ['picks', 'battle_victory', 'battle_trophy_change'],
       {
-        ...this.$clicker.defaultSlices('battle'),
+        ...this.$clicker.defaultSlicesRaw('battle'),
         player_tag: [this.player.tag],
       },
       { sort: { picks: 'desc' }, cache: 60 })

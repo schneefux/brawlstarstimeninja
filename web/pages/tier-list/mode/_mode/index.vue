@@ -137,7 +137,7 @@ import Vue from 'vue'
 import { mapState } from 'vuex'
 import { MetaInfo } from 'vue-meta'
 import { formatMode, kebabToCamel } from '~/lib/util'
-import { camelToKebab, slugify } from '../../../../lib/util'
+import { camelToKebab, slugify } from '@/lib/util'
 
 interface EventIdAndMap {
   id: number

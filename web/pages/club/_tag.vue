@@ -60,8 +60,8 @@
 import Vue from 'vue'
 import { mapState } from 'vuex'
 import { MetaInfo } from 'vue-meta'
-import { capitalize } from '../../lib/util'
-import { Club } from '../../model/Brawlstars'
+import { capitalize } from '@/lib/util'
+import { Club } from '@/model/Brawlstars'
 
 export default Vue.extend({
   head(): MetaInfo {

@@ -31,8 +31,8 @@
           slot="content"
           class="text-sm text-center"
         >
-          {{ metaStatMaps.formatters[metric](player.metric) }}
-          {{ metaStatMaps.labels[metric] }}
+          {{ commonMeasurements[metric].formatter(player.metric) }}
+          {{ commonMeasurements[metric].name }}
         </p>
       </card>
     </horizontal-scroller>
@@ -50,10 +50,10 @@
 </template>
 
 <script lang="ts">
-import Vue, { PropType } from 'vue'
-import { capitalize, capitalizeWords, formatMode, metaStatMaps } from '~/lib/util'
+import Vue from 'vue'
+import { commonMeasurements } from '~/lib/cube'
+import { capitalize } from '~/lib/util'
 import { Leaderboard, LeaderboardEntry } from '~/model/Api'
-import { PlayerRankTableRow } from './player-rank-table.vue'
 
 export default Vue.extend({
   props: {
@@ -80,8 +80,8 @@ export default Vue.extend({
     this.data = leaderboard.entries
   },
   computed: {
-    metaStatMaps() {
-      return metaStatMaps
+    commonMeasurements() {
+      return commonMeasurements
     },
     capitalize() {
       return capitalize

@@ -26,11 +26,11 @@
         </div>
         <div>
           <dt class="inline">Battles</dt>
-          <dd class="inline">{{ metaStatMaps.formatters.picks(data.picks) }}</dd>
+          <dd class="inline">{{ commonMeasurements.picks.formatter(data.picks) }}</dd>
         </div>
         <div>
-          <dt class="inline">{{ metaStatMaps.labels.winRate }}</dt>
-          <dd class="inline">{{ metaStatMaps.formatters.winRate(data.battle_victory) }}</dd>
+          <dt class="inline">{{ commonMeasurements.winRate.name }}</dt>
+          <dd class="inline">{{ commonMeasurements.winRate.formatter(data.battle_victory) }}</dd>
         </div>
       </dl>
     </template>
@@ -39,7 +39,8 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { formatSI, metaStatMaps } from '~/lib/util'
+import { commonMeasurements } from '~/lib/cube'
+import { formatSI } from '~/lib/util'
 
 interface Row {
   picks: number
@@ -58,7 +59,7 @@ export default Vue.extend({
   async fetch() {
     const data = await this.$clicker.query('player.clan', 'battle',
       [], ['picks', 'users', 'battle_victory'], {
-        ...this.$clicker.defaultSlices('battle'),
+        ...this.$clicker.defaultSlicesRaw('battle'),
         trophy_season_end: ['current'],
         player_name_ilike: ['%' + this.pattern + '%'],
       }, {
@@ -68,8 +69,8 @@ export default Vue.extend({
     this.data = data.data[0]
   },
   computed: {
-    metaStatMaps() {
-      return metaStatMaps
+    commonMeasurements() {
+      return commonMeasurements
     },
     formatSI() {
       return formatSI

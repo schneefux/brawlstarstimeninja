@@ -38,8 +38,8 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { brawlerId, camelToKebab, capitalize, formatMode, metaStatMaps, slugify } from '../lib/util'
-import { Player } from '../model/Api'
+import { brawlerId, camelToKebab, capitalize, formatMode, slugify } from '@/lib/util'
+import { Player } from '@/model/Api'
 
 interface Row {
   brawler_name: string
@@ -76,7 +76,7 @@ export default Vue.extend({
       ['brawler_name'],
       ['wins'],
       {
-        ...this.$clicker.defaultSlices('map'),
+        ...this.$clicker.defaultSlicesRaw('map'),
         battle_event_map: [this.map],
         battle_event_mode: [this.mode],
       },
@@ -115,9 +115,6 @@ export default Vue.extend({
     },
     formatMode() {
       return formatMode
-    },
-    metaStatMaps() {
-      return metaStatMaps
     },
     brawlerId() {
       return brawlerId

@@ -16,7 +16,7 @@
         class="text-lg flex"
       >
         <dd class="text-yellow-400 font-semibold w-16 md:w-auto text-right">{{ value }}</dd>
-        <dt class="ml-2 w-full overflow-hidden">{{ metaStatMaps.labels[name] }}</dt>
+        <dt class="ml-2 w-full overflow-hidden">{{ commonMeasurements[name].name }}</dt>
       </div>
     </card>
   </dl>
@@ -24,7 +24,7 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { metaStatMaps } from '~/lib/util.ts'
+import { commonMeasurements } from '~/lib/cube'
 import { Player } from '~/model/Brawlstars'
 
 export default Vue.extend({
@@ -51,8 +51,8 @@ export default Vue.extend({
         duoVictories: this.player.duoVictories,
       }
     },
-    metaStatMaps() {
-      return metaStatMaps
+    commonMeasurements() {
+      return commonMeasurements
     },
   },
 })

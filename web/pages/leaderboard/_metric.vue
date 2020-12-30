@@ -63,8 +63,8 @@
 import Vue from 'vue'
 import { MetaInfo } from 'vue-meta'
 import { mapState, mapActions } from 'vuex'
-import { Leaderboard, LeaderboardEntry } from '../../model/Api'
-import { camelToSnakeCase, capitalizeWords } from '../../lib/util'
+import { Leaderboard, LeaderboardEntry } from '@/model/Api'
+import { camelToSnakeCase, capitalizeWords } from '@/lib/util'
 import { PlayerRankTableRow } from '~/components/player-rank-table.vue'
 
 function formatMetric(m: string) {

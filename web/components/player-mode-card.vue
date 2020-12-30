@@ -6,10 +6,10 @@
     <div slot="content">
       <dl class="flex">
         <dd class="font-semibold">
-          {{ stats.picks > 5 ? metaStatMaps.formatters.winRate(stats.winRate) : '?' }}
+          {{ stats.picks > 5 ? commonMeasurements.winRate.formatter(stats.winRate) : '?' }}
         </dd>
         <dt class="ml-1">
-          {{ metaStatMaps.labels.winRate }}
+          {{ commonMeasurements.winRate.name }}
         </dt>
       </dl>
       <p class="text-xs">
@@ -85,10 +85,11 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { formatMode, metaStatMaps, getBestBrawlers, capitalize, brawlerId } from '~/lib/util'
+import { formatMode, getBestBrawlers, capitalize, brawlerId } from '~/lib/util'
 import { MapMetaMap, MapMeta } from '~/model/MetaEntry'
 import { Brawler, Battle } from '~/model/Api'
-import { camelToKebab, slugify } from '../lib/util'
+import { camelToKebab, slugify } from '@/lib/util'
+import { commonMeasurements } from '~/lib/cube'
 
 interface Row {
   picks: number
@@ -153,7 +154,7 @@ export default Vue.extend({
       [],
       ['picks', 'battle_victory'],
       {
-        ...this.$clicker.defaultSlices('battle'),
+        ...this.$clicker.defaultSlicesRaw('battle'),
         battle_event_mode: [this.mode],
         player_tag: [this.playerTag],
       },
@@ -228,8 +229,8 @@ export default Vue.extend({
     formatMode() {
       return formatMode
     },
-    metaStatMaps() {
-      return metaStatMaps
+    commonMeasurements() {
+      return commonMeasurements
     },
     brawlerId() {
       return brawlerId

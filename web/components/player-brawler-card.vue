@@ -151,7 +151,7 @@ export default Vue.extend({
       [],
       ['picks', 'battle_victory'],
       {
-        ...this.$clicker.defaultSlices('battle'),
+        ...this.$clicker.defaultSlicesRaw('battle'),
         // TODO use ID
         brawler_name: [this.brawler.name.toUpperCase()],
         player_tag: [this.playerTag],

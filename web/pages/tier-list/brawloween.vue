@@ -40,8 +40,8 @@
 import Vue from 'vue'
 import { mapState } from 'vuex'
 import { MetaInfo } from 'vue-meta'
-import { formatAsJsonLd, unformatMode } from '../../lib/util'
-import { CurrentAndUpcomingEvents, ActiveEvent } from '../../model/Api'
+import { formatAsJsonLd, unformatMode } from '@/lib/util'
+import { CurrentAndUpcomingEvents, ActiveEvent } from '@/model/Api'
 
 export default Vue.extend({
   data() {

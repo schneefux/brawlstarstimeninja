@@ -122,7 +122,7 @@
 import Vue, { PropType } from 'vue'
 import { Player } from '../model/Brawlstars'
 import { TrophiesRow } from '../model/Clicker'
-import { Brawler } from '../model/Api'
+import { Brawler } from '@/model/Api'
 
 export default Vue.extend({
   props: {

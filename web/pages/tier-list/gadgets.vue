@@ -1,16 +1,18 @@
 <template>
-  <page-dashboard title="Gadget Tier List">
+  <page title="Gadget Tier List">
     <map-breadcrumbs gadgets></map-breadcrumbs>
     <p>
       Use the Gadget Tier List to find the best Gadget for all Brawlers in Brawl Stars. <br />
       The statistics are calculated as the difference between a Brawler with one Gadget and a Brawler with zero Gadgets.
     </p>
 
-    <meta-views
-      class="mt-4"
-      default-cube="gadget"
-    ></meta-views>
-  </page-dashboard>
+    <div class="flex flex-wrap justify-center">
+      <best-gadgets-table
+        full-height
+        md
+      ></best-gadgets-table>
+    </div>
+  </page>
 </template>
 
 <script lang="ts">
@@ -18,8 +20,9 @@ import Vue from 'vue'
 import { mapState } from 'vuex'
 
 export default Vue.extend({
+  middleware: ['cached'],
   head() {
-    const description = `Brawl Stars Gadget Tier List. Find the best Gadgets for all Brawlers with Win Rates and Rankings.`
+    const description = `Brawl Stars Gadget Tier List. Find the best Gagdets for all Brawlers with Win Rates and Rankings.`
     return {
       title: `Gadget Tier List`,
       meta: [
@@ -31,7 +34,6 @@ export default Vue.extend({
   meta: {
     title: 'Gadgets',
   },
-  middleware: ['cached'],
   computed: {
     ...mapState({
       isApp: (state: any) => state.isApp as boolean,

@@ -242,7 +242,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 import { mapState } from 'vuex'
-import { Player, LeaderboardEntry } from '../model/Api'
+import { Player, LeaderboardEntry } from '@/model/Api'
 import { TrophiesRow } from '../model/Clicker'
 import { BattleTotalRow } from './player-battles-stats.vue'
 

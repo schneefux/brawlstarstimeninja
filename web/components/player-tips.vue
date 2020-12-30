@@ -11,9 +11,9 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { capitalizeWords, getBestBrawlers, formatMode } from '../lib/util'
+import { capitalizeWords, getBestBrawlers, formatMode } from '@/lib/util'
 import { MapMeta, MapMetaMap } from '../model/MetaEntry'
-import { Player, BrawlerMetaStatistics } from '../model/Api'
+import { Player, BrawlerMetaStatistics } from '@/model/Api'
 
 interface Recommendation {
   id: string

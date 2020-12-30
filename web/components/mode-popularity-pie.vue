@@ -27,7 +27,7 @@ export default Vue.extend({
     const data = await this.$clicker.query('stats.popularity', 'map',
       ['battle_event_mode'],
       ['picks'],
-      this.$clicker.defaultSlices('map'),
+      this.$clicker.defaultSlicesRaw('map'),
       {
         sort: { picks: 'desc' },
         cache: 60*60,

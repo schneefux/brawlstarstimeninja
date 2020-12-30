@@ -23,10 +23,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-if="pageRows.length == 0"
-          class="w-full"
-        >
+        <tr v-if="pageRows.length == 0">
           <td
             :colspan="(ranked ? 1 : 0) + columns.length"
             class="text-center"
@@ -38,7 +35,7 @@
           v-for="r in pageRows"
           :key="r[idKey]"
         >
-          <th
+          <td
             v-if="ranked"
             scope="row"
             class="text-right pr-2 pt-1"
@@ -50,7 +47,7 @@
             >
               {{ r.index + 1 }}
             </slot>
-          </th>
+          </td>
           <td
             v-for="(c, index) in columns"
             :key="c.key"

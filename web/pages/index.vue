@@ -207,10 +207,10 @@
 import Vue from 'vue'
 import { mapState, mapMutations, mapActions } from 'vuex'
 import { MetaInfo } from 'vue-meta'
-import { formatAsJsonLd, getBest, unformatMode } from '../lib/util'
+import { formatAsJsonLd, getBest, unformatMode } from '@/lib/util'
 import { Player } from '../model/Brawlstars'
 import { MapMetaMap } from '../model/MetaEntry'
-import { BrawlerMetaStatistics, ActiveEvent, CurrentAndUpcomingEvents } from '../model/Api'
+import { BrawlerMetaStatistics, ActiveEvent, CurrentAndUpcomingEvents } from '@/model/Api'
 
 function playerToRoute(player) {
   return {

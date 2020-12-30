@@ -34,7 +34,7 @@ export default Vue.extend({
       ['timestamp'],
       ['timestamp', 'brawler_trophies'],
       {
-        ...this.$clicker.defaultSlices('brawler'),
+        ...this.$clicker.defaultSlicesRaw('brawler'),
         // TODO use ID
         ...(this.brawler != undefined ? {
           brawler_name: [this.brawler.toUpperCase()],

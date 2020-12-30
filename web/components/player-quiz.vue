@@ -225,8 +225,8 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 import { mapState, mapMutations } from 'vuex'
-import { Player } from '../model/Api'
-import { brawlerId } from '../lib/util'
+import { Player } from '@/model/Api'
+import { brawlerId } from '@/lib/util'
 
 type Color = 'optimism'|'friendly'|'excitement'|'creative'|'trust'|'peaceful'|'balance'
 

@@ -1,3 +1,5 @@
+const colors = require('tailwindcss/colors')
+
 module.exports = {
   purge: {
     enabled: process.env.NODE_ENV == 'production',
@@ -12,6 +14,21 @@ module.exports = {
   },
   darkMode: false,
   theme: {
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+
+      gray: colors.gray,
+      yellow: colors.yellow,
+      red: colors.red,
+
+      white: colors.white,
+      green: colors.green,
+      orange: colors.orange,
+      blue: colors.blue,
+      purple: colors.purple,
+      pink: colors.pink,
+    },
     extend: {
       textShadow: {
         'default': '-1px 0 #22292f, 0 1px #22292f, 1px 0 #22292f, 0 -1px #22292f',

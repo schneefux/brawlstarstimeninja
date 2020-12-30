@@ -1,17 +1,12 @@
 import { differenceInMinutes, parseISO } from "date-fns"
-import { brawlerId, capitalizeWords, dimensionMap, sliceMap, formatMode, measurementMap, measurementOfTotal, MetaGridEntry, metaStatMaps } from "~/lib/util"
+import { formatMode, MetaGridEntry } from "~/lib/util"
 import { CurrentAndUpcomingEvents } from "~/model/Api"
 import { Route, Location } from "vue-router"
-
-const cubes = ['player', 'brawler', 'map', 'synergy', 'starpower', 'gadget']
+import { commonMeasurements, Dimension, Measurement, Slice, SliceValue } from "~/lib/cube"
 
 export interface PicksWins {
   picks: number
   wins: number
-}
-
-export interface TeamPicksWins extends PicksWins {
-  brawlers: string[]
 }
 
 export interface EventMetadata {
@@ -29,12 +24,11 @@ export interface Slices extends Record<string, string[]|undefined> {}
 
 interface Clicker {
   timePresets: Record<string, string>
-  defaultSlices(cube: string): Record<string, string[]>
-  cubes: typeof cubes[number][]
-  queryMetadata(cube: typeof cubes[number]): Promise<{ dimensions: string[], measures: string[], slices: Record<string, number> }>
+  defaultSlices(cubeId: string): SliceValue
+  defaultSlicesRaw(cubeId: string): Record<string, string[]>
   query<T=any>(
     name: string,
-    cube: typeof cubes[number],
+    cube: string,
     dimensions: string[],
     measures: string[],
     slices: Slices,
@@ -59,11 +53,11 @@ interface Clicker {
     // H(ally_brawler,brawler)
     pairData: Map<string, Map<string, PicksWins>>,
   }>
-  routeToSlices(route: Route, defaults?: Slices): Record<string, string[]>
-  slicesToLocation(slices: Slices, defaults?: Slices): Location
-  constructQuery(dimensions: string[], measurements: string[], slices: Record<string, string[]>): { dimensions: string[], measurements: string[], slices: Record<string, string[]> }
-  mapToMetaGridEntry(dimensions: string[], measurements: string[], rows: any[], totals: any, diffDimension?: string): MetaGridEntry[]
-  compareEntries(baseEntries: MetaGridEntry[], comparingEntries: MetaGridEntry[]): MetaGridEntry[]
+  routeToSlices(route: Route, defaults?: SliceValue): SliceValue
+  slicesToLocation(slices: SliceValue, defaults?: SliceValue): Location
+  constructQuery(dimensions: Dimension[], measurements: Measurement[], slices: Slice[], slicesValues: SliceValue): { dimensions: string[], measurements: string[], slices: Record<string, string[]> }
+  mapToMetaGridEntry(dimensions: Dimension[], measurements: Measurement[], rows: any[], totals: any, diffDimension?: string): MetaGridEntry[]
+  compareEntries(baseEntries: MetaGridEntry[], comparingEntries: MetaGridEntry[], joiner: (b: MetaGridEntry, c: MetaGridEntry) => boolean): MetaGridEntry[]
 }
 
 declare module 'vue/types/vue' {
@@ -98,6 +92,31 @@ export default (context, inject) => {
       switch (cube) {
         case 'map':
           return {
+            season: ['balance'],
+            powerplay: ['false'],
+          }
+        case 'battle':
+          return {
+            season: ['month'],
+          }
+        case 'brawler':
+          return {
+          }
+        case 'synergy':
+          return {
+            season: ['balance'],
+            ally: ['SHELLY'],
+          }
+        default:
+          return {
+            season: ['balance'],
+          }
+      }
+    },
+    defaultSlicesRaw(cube) {
+      switch (cube) {
+        case 'map':
+          return {
             trophy_season_end: ['balance'],
             battle_event_powerplay: ['false'],
           }
@@ -118,10 +137,6 @@ export default (context, inject) => {
             trophy_season_end: ['balance'],
           }
       }
-    },
-    cubes,
-    queryMetadata(cube) {
-      return context.$axios.$get(context.env.clickerUrl + '/clicker/cube/' + cube + '/metadata')
     },
     query(name, cube, dimensions, measures, slices, options = {}) {
       const query = new URLSearchParams({
@@ -315,25 +330,25 @@ export default (context, inject) => {
       return {
         ...defaults,
         ...('mode' in route.query ? {
-          battle_event_mode: [route.query['mode'] as string],
+          mode: [route.query['mode'] as string],
         }: {}),
         ...('map' in route.query ? {
-          battle_event_map: [route.query['map'] as string],
+          map: [route.query['map'] as string],
         }: {}),
         ...('powerplay' in route.query ? {
-          battle_event_powerplay: [route.query['powerplay'] as string],
+          powerplay: [route.query['powerplay'] as string],
         } : {}),
         ...('season' in route.query ? {
-          trophy_season_end: [route.query['season'] as string],
+          season: [route.query['season'] as string],
         } : {}),
         ...('range' in route.query ? {
-          brawler_trophyrange: route.query['range'] as string[],
+          trophies: route.query['range'] as string[],
         } : {}),
         ...('ally' in route.query ? {
-          ally_brawler_name: [route.query['ally'] as string],
+          ally: [route.query['ally'] as string],
         } : {}),
         ...('name_like' in route.query ? {
-          player_name_ilike: [route.query['name_like'] as string],
+          playerName: [route.query['name_like'] as string],
         } : {}),
       }
     },
@@ -344,41 +359,59 @@ export default (context, inject) => {
       ))
 
       const query = {} as Record<string, string[]>
-      if ('battle_event_mode' in diff) {
+      if ('mode' in diff) {
         query['mode'] = diff.battle_event_mode!
       }
-      if ('battle_event_map' in diff) {
+      if ('map' in diff) {
         query['map'] = diff.battle_event_map!
       }
-      if ('battle_event_powerplay' in diff) {
+      if ('powerplay' in diff) {
         query['powerplay'] = diff.battle_event_powerplay!
       }
-      if ('trophy_season_end' in diff) {
+      if ('season' in diff) {
         query['season'] = diff.trophy_season_end!
       }
-      if ('brawler_trophyrange' in diff) {
+      if ('trophies' in diff) {
         query['range'] = diff.brawler_trophyrange!
       }
-      if ('ally_brawler_name' in diff) {
+      if ('ally' in diff) {
         query['ally'] = diff.ally_brawler_name!
       }
-      if ('player_name_ilike' in diff) {
+      if ('playerName' in diff) {
         query['name_like'] = diff.player_name_ilike!
       }
 
       return { query }
     },
-    constructQuery(dimensions, measurements, slices) {
-      const queryDimensions = dimensions.map(d => dimensionMap[d])
-      const queryMeasurements = measurements.map(m => measurementMap[m])
-      const querySlices = Object.fromEntries(Object.entries(slices)
+    constructQuery(dimensions, measurements, slices, slicesValues) {
+      const queryDimensions = dimensions.map(d => d.column)
+      const queryMeasurements = <string[]>[]
+      measurements.forEach(m => {
+        queryMeasurements.push(m.column)
+        if ('anyColumns' in m) {
+          // m is actually a dimension
+          (<Dimension>m).anyColumns
+            .forEach(c => queryMeasurements.push(c))
+        }
+      })
+      dimensions.forEach(d => d.anyColumns
+        .forEach(c => queryMeasurements.push(c)))
+
+      const querySlices = Object.fromEntries(Object.entries(slicesValues)
         .filter(([key, value]) => {
           if (!Array.isArray(value)) {
-            throw new Error('Illegal slice specification! ' + { [key]: value })
+            throw new Error('Illegal slice specification! ' + key + ': ' + value)
           }
           return value.length > 0 && value[0] != undefined
         })
-        .map(([key, value]) => [sliceMap[key], value]))
+        .map(([key, value]) => {
+          const slice = slices.find(s => s.id == key)
+          if (slice == undefined) {
+            throw new Error('Undefined slice ' + key)
+          }
+          return [slice.column, value]
+        })
+      )
 
       return {
         dimensions: queryDimensions,
@@ -390,84 +423,74 @@ export default (context, inject) => {
       return rows.map(row => {
         const entry: MetaGridEntry = {
           id: '',
+          dimensionsRaw: {},
           dimensions: {},
+          measurementsRaw: {},
           measurements: {},
-          measurementsFormatted: {},
         }
 
-        if (dimensions.includes('player')) {
-          entry.dimensions.player = {
-            tag: row.player_tag,
-          }
-          if (measurements.includes('player')) {
-            entry.dimensions.player.name = row.player_name
-          }
-        }
-        if (dimensions.includes('brawler') || measurements.includes('brawler')) {
-          entry.dimensions.brawler = {
-            id: brawlerId({ name: row.brawler_name }),
-            name: capitalizeWords(row.brawler_name.toLowerCase()),
-          }
-        }
-        if(dimensions.includes('ally') || measurements.includes('ally')) {
-          entry.dimensions.ally = {
-            id: brawlerId({ name: row.ally_brawler_name }),
-            name: capitalizeWords(row.ally_brawler_name.toLowerCase()),
-          }
-        }
-        if (dimensions.includes('brawlers') || measurements.includes('brawlers')) {
-          entry.dimensions.brawlers = row.brawler_names.map(b => ({
-            id: brawlerId({ name: b }),
-            name: capitalizeWords(b.toLowerCase()),
-          }))
-        }
-
-        entry.id = JSON.stringify(entry.dimensions) // TODO improve performance
-
+        const anyDimensions: Dimension[] = []
         for (const m of measurements) {
-          if (typeof row[measurementMap[m]] != 'string') {
-            // else: already added to dimensions
-            entry.measurements[m] = row[measurementMap[m]] / (measurementOfTotal[m] ? totals[measurementMap[m]] : 1)
-            entry.measurementsFormatted[m] = metaStatMaps.formatters[m](entry.measurements[m])
+          if ('percentage' in m) {
+            // m is a measurement
+            const measurement =  row[m.column] / (m.percentage ? totals[m.column] : 1)
+            entry.measurementsRaw[m.id] = measurement
+            entry.measurements[m.id] = m.formatter(measurement)
+          } else {
+            // m is a dimension
+            anyDimensions.push(m)
           }
         }
+
+        let id = ''
+        for (const d of dimensions.concat(anyDimensions)) {
+          const dimension = d.anyColumns
+            .concat(d.column)
+            .reduce((o, c) => ({ ...o, [c]: row[c] }), {}) // pick keys from row
+          entry.dimensionsRaw[d.id] = dimension
+          const formatted = d.formatter(dimension)
+          entry.dimensions[d.id] = formatted
+          id += formatted
+        }
+        entry.id = id
 
         return entry
       })
     },
-    compareEntries(baseEntries: MetaGridEntry[], comparingEntries: MetaGridEntry[]) {
+    compareEntries(baseEntries: MetaGridEntry[], comparingEntries: MetaGridEntry[], joiner) {
       return comparingEntries
         .map(comparingEntry => {
-          // TODO compare all dimensions here
-          const baseEntry = baseEntries.find((b: any) => b.brawler.id == (<any>comparingEntry).brawler.id)
+          const baseEntry = baseEntries.find(b => joiner(comparingEntry, b))
           if (baseEntry == undefined) {
             return undefined
           }
-          if (!('winRate' in baseEntry.measurements) || !('picks' in baseEntry.measurements)) {
-            return undefined
-          }
+          // replace '...Diff' by actual diffs
+          const measurementsRaw: Record<string, number> = {}
+          const measurements: Record<string, string> = {}
 
-          // calculate z-score, testing with star power wins against without star power wins
-          const zN = comparingEntry.measurements.picks
-          const zX = comparingEntry.measurements.winRate * zN
-          const zP = baseEntry.measurements.winRate
-          const zCondition = zN >= 50 && zN * zP > 5 && zN * (1 - zP) > 5
-          if (!zCondition) {
-            return undefined
-          }
-
-          const measurements: Record<string, number> = {}
-          const measurementsFormatted: Record<string, string> = {}
-          measurements.winsZScore = (zX - zN * zP) / Math.sqrt(zN * zP * (1 - zP))
           for (const m in baseEntry.measurements) {
-            measurements[m] = baseEntry.measurements[m] - comparingEntry.measurements[m]
-            measurementsFormatted[m] = metaStatMaps.formatters[m](measurements[m])
+            measurementsRaw[m] = baseEntry.measurementsRaw[m] - comparingEntry.measurementsRaw[m]
+            measurements[m] = commonMeasurements[m].formatter(measurementsRaw[m])
+          }
+
+          if (comparingEntry.measurements.winsZScore != undefined) {
+            // replace '...ZScore' by actual z-score (based on wins)
+            const zN = comparingEntry.measurementsRaw.picks
+            const zX = comparingEntry.measurementsRaw.winsZScore
+            const zP = baseEntry.measurementsRaw.winsZScore / baseEntry.measurementsRaw.picks
+            const zCondition = zN >= 50 && zN * zP > 5 && zN * (1 - zP) > 5
+            if (zCondition) {
+              measurementsRaw.winsZScore = (zX - zN * zP) / Math.sqrt(zN * zP * (1 - zP))
+            } else {
+              measurementsRaw.winsZScore = 0
+            }
+            measurements.winsZScore = commonMeasurements.winsZScore.formatter(measurementsRaw.winsZScore)
           }
 
           return {
             ...comparingEntry,
+            measurementsRaw,
             measurements,
-            measurementsFormatted,
           }
         })
       .filter(e => e != undefined) as MetaGridEntry[]

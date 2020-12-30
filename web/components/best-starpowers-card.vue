@@ -29,8 +29,8 @@
           clazz="h-10"
         ></media-img>
         <p class="text-xs">
-          {{ metaStatMaps.formatters.winRate(entry.battle_victory) }}
-          {{ metaStatMaps.labelsShort.winRate }}
+          {{ commonMeasurements.winRate.formatter(entry.battle_victory) }}
+          {{ commonMeasurements.winRate.nameShort }}
         </p>
       </div>
     </shimmer>
@@ -39,7 +39,8 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { metaStatMaps, capitalize } from '../lib/util'
+import { capitalize } from '@/lib/util'
+import { commonMeasurements } from '../lib/cube'
 
 interface Row {
   brawler_id: number
@@ -72,7 +73,7 @@ export default Vue.extend({
       ['brawler_id', 'brawler_name', ...dimensions],
       ['battle_victory'],
       {
-        ...this.$clicker.defaultSlices('starpower'),
+        ...this.$clicker.defaultSlicesRaw('starpower'),
         [this.kind == 'starpowers' ? 'with_starpower' : 'with_gadget']: ['true'],
       },
       { sort: { picks: 'desc' }, limit: 3, cache: 60*60 })
@@ -91,8 +92,8 @@ export default Vue.extend({
     kindNameSingular(): string {
       return capitalize(this.kindLong).replace(/s$/, '')
     },
-    metaStatMaps() {
-      return metaStatMaps
+    commonMeasurements() {
+      return commonMeasurements
     },
   },
 })

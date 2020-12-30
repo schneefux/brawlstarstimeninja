@@ -42,7 +42,7 @@ export default Vue.extend({
     const data = await this.$clicker.query('meta.mode.competition', 'map',
       ['battle_event_map', 'battle_event_mode'],
       ['battle_event_map', 'battle_event_mode', 'timestamp', 'picks'], {
-        ...this.$clicker.defaultSlices('map'),
+        ...this.$clicker.defaultSlicesRaw('map'),
         trophy_season_end: ['month'],
         battle_event_map_like: ['Competition Winner %'],
       }, {

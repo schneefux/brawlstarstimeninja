@@ -72,8 +72,7 @@
 
 <script lang="ts">
 import { IContentDocument } from '@nuxt/content/types/content'
-import { format } from 'date-fns'
-import { parseISO } from 'date-fns/fp'
+import { format, parseISO } from 'date-fns'
 import Vue, { PropType } from 'vue'
 
 export default Vue.extend({

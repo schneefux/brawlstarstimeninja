@@ -32,8 +32,8 @@
           slot="content"
           class="text-xs text-center"
         >
-          {{ metaStatMaps.formatters.winRate(brawler.battle_victory) }}
-          {{ metaStatMaps.labels.winRate }}
+          {{ commonMeasurements.winRate.formatter(brawler.battle_victory) }}
+          {{ commonMeasurements.winRate.name }}
         </p>
       </card>
     </horizontal-scroller>
@@ -52,7 +52,8 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { brawlerId, capitalizeWords, metaStatMaps } from '~/lib/util'
+import { commonMeasurements } from '~/lib/cube'
+import { brawlerId, capitalizeWords } from '~/lib/util'
 import { BrawlerMetaStatistics } from '~/model/Api'
 
 interface Row {
@@ -79,7 +80,7 @@ export default Vue.extend({
       ['brawler_name'],
       ['battle_victory'],
       {
-        ...this.$clicker.defaultSlices('map'),
+        ...this.$clicker.defaultSlicesRaw('map'),
         trophy_season_end: ['current'],
       },
       {
@@ -94,8 +95,8 @@ export default Vue.extend({
     this.data = data.data as any
   },
   computed: {
-    metaStatMaps() {
-      return metaStatMaps
+    commonMeasurements() {
+      return commonMeasurements
     },
     mediaUrl() {
       return process.env.mediaUrl

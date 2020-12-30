@@ -38,7 +38,7 @@
 <script lang="ts">
 import { IContentDocument } from '@nuxt/content/types/content'
 import Vue from 'vue'
-import { camelToKebab, formatMode, slugify } from '../lib/util'
+import { camelToKebab, formatMode, slugify } from '@/lib/util'
 
 export default Vue.extend({
   inheritAttrs: false,

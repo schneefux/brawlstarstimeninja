@@ -201,7 +201,7 @@
 import Vue from 'vue'
 import { mapState } from 'vuex'
 import { MetaInfo } from 'vue-meta'
-import { capitalize, capitalizeWords, metaStatMaps } from '../../../lib/util'
+import { capitalizeWords } from '@/lib/util'
 
 export default Vue.extend({
   head(): MetaInfo {
@@ -225,8 +225,6 @@ export default Vue.extend({
       brawlerName: '',
       showAllModes: false,
       showAllMaps: false,
-      capitalize,
-      metaStatMaps,
     }
   },
   computed: {
