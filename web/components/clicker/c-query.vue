@@ -71,17 +71,18 @@ export default Vue.extend({
       return
     }
 
-    const sort = this.config[this.cubeId].measurements
+    const cube = this.config[this.cubeId]
+    const sort = cube.measurements
       .find(m => this.sortId == m.id)
-    const dimensions = this.config[this.cubeId].dimensions
+    const dimensions = cube.dimensions
       .filter(d => this.dimensionsIds.includes(d.id))
-    const measurements = this.config[this.cubeId].measurements
+    const measurements = cube.measurements
       .filter(m => this.measurementsIds.includes(m.id))
 
     const query = this.$clicker.constructQuery(dimensions, measurements, this.config[this.cubeId].slices, {
       ...this.$clicker.defaultSlices(this.cubeId),
       ...this.slicesValues,
-    })
+    }, cube.metaColumns)
     const rawData = await this.$clicker.query('meta.' + this.cubeId, this.cubeId,
       query.dimensions,
       query.measurements,
@@ -93,7 +94,7 @@ export default Vue.extend({
         limit: this.limit,
       })
 
-    const data = this.$clicker.mapToMetaGridEntry(dimensions, measurements, rawData.data, rawData.totals)
+    const data = this.$clicker.mapToMetaGridEntry(dimensions, measurements, rawData.data, rawData.totals, cube.metaColumns)
 
     this.state = {
       data,

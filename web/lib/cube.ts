@@ -10,6 +10,7 @@ export interface Cube {
   defaultDimensionId: string
   measurements: Measurement[]
   defaultMeasurementId: string
+  metaColumns: string[]
   slices: Slice[]
 }
 
@@ -510,6 +511,7 @@ const cubes: Record<string, Cube> = {
       ...Object.values(brawlerBattleMeasurements),
     ],
     defaultMeasurementId: 'winRateAdj',
+    metaColumns: ['picks', 'timestamp'],
     slices: [
       commonSlices.season,
       commonSlices.mode,
@@ -531,6 +533,7 @@ const cubes: Record<string, Cube> = {
       ...Object.values(brawlerBattleMeasurements),
     ],
     defaultMeasurementId: 'winRateAdj',
+    metaColumns: ['picks', 'timestamp'],
     slices: [
       commonSlices.season,
       commonSlices.trophies,
@@ -550,6 +553,7 @@ const cubes: Record<string, Cube> = {
       ...Object.values(brawlerBattleMeasurements),
     ],
     defaultMeasurementId: 'winRateAdj',
+    metaColumns: ['picks', 'timestamp'],
     slices: [
       commonSlices.season,
       commonSlices.trophies,
@@ -569,6 +573,7 @@ const cubes: Record<string, Cube> = {
       ...Object.values(brawlerBattleMeasurements),
     ],
     defaultMeasurementId: 'winRateAdj',
+    metaColumns: ['picks', 'timestamp'],
     slices: [
       commonSlices.season,
       commonSlices.mode,
@@ -591,6 +596,7 @@ const cubes: Record<string, Cube> = {
       commonMeasurements.winRate,
     ],
     defaultMeasurementId: 'wins',
+    metaColumns: ['picks', 'timestamp'],
     slices: [
       commonSlices.season,
       commonSlices.mode,
@@ -608,9 +614,17 @@ const cubes: Record<string, Cube> = {
     ],
     defaultDimensionId: 'brawler',
     measurements: [
-      ...Object.values(brawlerBattleMeasurements),
+      commonMeasurements.trophyChange,
+      commonMeasurements.winRate,
+      commonMeasurements.wins,
+      commonMeasurements.picks,
+      commonMeasurements.pickRate,
+      commonMeasurements.useRate,
+      commonMeasurements.rank,
+      commonMeasurements.duration,
     ],
     defaultMeasurementId: 'winRateAdj',
+    metaColumns: ['picks', 'timestamp'],
     slices: [
       commonSlices.season,
       commonSlices.powerplay,

@@ -132,6 +132,7 @@ export interface MetaGridEntry {
   measurementsRaw: Record<string, number>
   dimensions: Record<string, string>
   measurements: Record<string, string>
+  meta: Record<string, string|number>
 }
 
 export interface MetaGridEntryTiered extends MetaGridEntry {

@@ -1,6 +1,6 @@
 <template>
   <card
-    v-if="measurements.some(m => m.id == 'picks') && dimensions.length == 1 && dimensions[0].id == 'brawler' && data.length > 0"
+    v-if="dimensions.length == 1 && dimensions[0].id == 'brawler' && data.length > 0 && 'picks' in data[0].meta"
     v-bind="$attrs"
     title="Balance Rating"
     size="w-48"
@@ -54,7 +54,7 @@ export default Vue.extend({
   },
   computed: {
     giniScore(): number {
-      const getStat = (r: MetaGridEntry) => r.measurementsRaw.picks
+      const getStat = (r: MetaGridEntry) => r.meta.picks as number
 
       // calculate Gini coefficient
       let absoluteDifference = 0

@@ -1,6 +1,6 @@
 <template>
   <card
-    v-if="measurements.some(m => m.id == 'picks')"
+    v-if="data.length > 0 && 'picks' in data[0].meta"
     v-bind="$attrs"
     title="Sample Size"
     size="w-32"
@@ -46,7 +46,7 @@ export default Vue.extend({
   },
   computed: {
     sample(): number {
-      return this.data.reduce((agg, e) => agg + e.measurementsRaw.picks, 0)
+      return this.data.reduce((agg, e) => agg + (e.meta.picks as number), 0)
     },
     sampleFormatted(): string {
       return formatSI(this.sample, 2)

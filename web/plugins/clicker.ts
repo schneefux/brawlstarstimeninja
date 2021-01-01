@@ -55,8 +55,8 @@ interface Clicker {
   }>
   routeToSlices(route: Route, defaults?: SliceValue): SliceValue
   slicesToLocation(slices: SliceValue, defaults?: SliceValue): Location
-  constructQuery(dimensions: Dimension[], measurements: Measurement[], slices: Slice[], slicesValues: SliceValue): { dimensions: string[], measurements: string[], slices: Record<string, string[]> }
-  mapToMetaGridEntry(dimensions: Dimension[], measurements: Measurement[], rows: any[], totals: any, diffDimension?: string): MetaGridEntry[]
+  constructQuery(dimensions: Dimension[], measurements: Measurement[], slices: Slice[], slicesValues: SliceValue, metaColumns: string[]): { dimensions: string[], measurements: string[], slices: Record<string, string[]> }
+  mapToMetaGridEntry(dimensions: Dimension[], measurements: Measurement[], rows: any[], totals: any, metaColumns: string[]): MetaGridEntry[]
   compareEntries(baseEntries: MetaGridEntry[], comparingEntries: MetaGridEntry[], joiner: (b: MetaGridEntry, c: MetaGridEntry) => boolean): MetaGridEntry[]
 }
 
@@ -383,9 +383,12 @@ export default (context, inject) => {
 
       return { query }
     },
-    constructQuery(dimensions, measurements, slices, slicesValues) {
+    constructQuery(dimensions, measurements, slices, slicesValues, metaColumns) {
+      // TODO filter duplicates
       const queryDimensions = dimensions.map(d => d.column)
       const queryMeasurements = <string[]>[]
+
+      metaColumns.forEach(c => queryMeasurements.push(c))
       measurements.forEach(m => {
         queryMeasurements.push(m.column)
         if ('anyColumns' in m) {
@@ -394,6 +397,7 @@ export default (context, inject) => {
             .forEach(c => queryMeasurements.push(c))
         }
       })
+
       dimensions.forEach(d => d.anyColumns
         .forEach(c => queryMeasurements.push(c)))
 
@@ -419,7 +423,7 @@ export default (context, inject) => {
         slices: querySlices,
       }
     },
-    mapToMetaGridEntry(dimensions, measurements, rows, totals) {
+    mapToMetaGridEntry(dimensions, measurements, rows, totals, metaColumns) {
       return rows.map(row => {
         const entry: MetaGridEntry = {
           id: '',
@@ -427,6 +431,11 @@ export default (context, inject) => {
           dimensions: {},
           measurementsRaw: {},
           measurements: {},
+          meta: {},
+        }
+
+        for (const m of metaColumns) {
+          entry.meta[m] = row[m]
         }
 
         const anyDimensions: Dimension[] = []
