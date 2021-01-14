@@ -10,7 +10,10 @@ export interface StarlistBrawler {
   imageUrl: string; // avatar with border
   imageUrl2: string; // avatar without border
   imageUrl3: string; // emote
-  class: string;
+  class: {
+    id: number;
+    name: string;
+  };
   rarity: {
     id: number;
     name: string;

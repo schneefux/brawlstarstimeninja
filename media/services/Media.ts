@@ -189,7 +189,7 @@ export default class MediaService {
       utilityRating: character.utilityRating,
       description: characterDescription,
       rarity: rarity || brawler?.rarity.name,
-      class: brawler?.class,
+      class: brawler?.class.name,
       unlock: brawler?.unlock,
 
       main: {
