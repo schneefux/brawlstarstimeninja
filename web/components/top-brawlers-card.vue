@@ -54,7 +54,6 @@
 import Vue from 'vue'
 import { commonMeasurements } from '~/lib/cube'
 import { brawlerId, capitalizeWords } from '~/lib/util'
-import { BrawlerMetaStatistics } from '~/model/Api'
 
 interface Row {
   id: string

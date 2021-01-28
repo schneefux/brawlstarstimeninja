@@ -29,26 +29,40 @@ export default Vue.extend({
   },
   fetchDelay: 0,
   async fetch() {
-    const data = await this.$clicker.query('player.brawler_history',
-      'brawler',
-      ['timestamp'],
-      ['timestamp', 'brawler_trophies'],
-      {
-        ...this.$clicker.defaultSlicesRaw('brawler'),
-        // TODO use ID
-        ...(this.brawler != undefined ? {
+    if (this.brawler != undefined) {
+      const data = await this.$clicker.query('player.brawler_history',
+        'brawler',
+        ['timestamp'],
+        ['timestamp', 'brawler_trophies'],
+        {
+          ...this.$clicker.defaultSlicesRaw('brawler'),
+          // TODO use ID
           brawler_name: [this.brawler.toUpperCase()],
-        } : {
-          brawler_name: undefined,
-        }),
-        player_tag: [this.playerTag],
-      },
-      { cache: 60 })
+          player_tag: [this.playerTag],
+        },
+        { cache: 60 })
 
-    this.history = data.data.map(b => ({
-      timestamp: b.timestamp,
-      trophies: b.brawler_trophies,
-    } as TrophiesRow))
+      this.history = data.data.map(b => ({
+        timestamp: b.timestamp,
+        trophies: b.brawler_trophies,
+      } as TrophiesRow))
+    } else {
+      const data = await this.$clicker.query('player.history',
+        'brawler',
+        ['timestamp'],
+        ['timestamp', 'player_trophies'],
+        {
+          ...this.$clicker.defaultSlicesRaw('brawler'),
+          brawler_name: undefined,
+          player_tag: [this.playerTag],
+        },
+        { cache: 60 })
+
+      this.history = data.data.map(b => ({
+        timestamp: b.timestamp,
+        trophies: b.player_trophies,
+      } as TrophiesRow))
+    }
   },
   computed: {
     graph(): any {
